@@ -1,0 +1,67 @@
+# Application configuration
+app_config:
+  rag_app_name: 'BCP_DOCUMENT_RAG_DEMO'
+  uc_catalog: 'theodore_kop_personal'
+  uc_schema: 'bcp'
+  uc_model_name: 'theodore_kop_personal.bcp.BCP_DOCUMENT_RAG_DEMO'
+  vector_search_endpoint: 'bcp_document_store'
+  source_path: '/Volumes/theodore_kop_personal/bcp/rag_documentation'
+  mlflow_experiment_name: '/Users/theodore.kop@databricks.com/BCP_DOCUMENT_RAG_DEMO'
+  evaluation_set_fqn: '`theodore_kop_personal`.`bcp`.BCP_DOCUMENT_RAG_DEMO_evaluation_set_ccv'
+
+# Data pipeline configuration
+data_pipeline_config:
+  vectorsearch_config:
+    pipeline_type: "CONTINUOS"
+  embedding_config:
+    embedding_endpoint_name: "databricks-bge-large-en"
+    embedding_tokenizer:
+      tokenizer_model_name: "BAAI/bge-large-en-v1.5"
+      tokenizer_source: "hugging_face"
+  pipeline_config:
+    file_format: "pdf"
+    parser:
+      name: "pypdf"
+      config: {}
+    chunker:
+      name: "langchain_recursive_char"
+      config:
+        chunk_size_tokens: 1024
+        chunk_overlap_tokens: 512
+
+# Destination tables configuration
+destination_tables:
+  raw_files_table: "`theodore_kop_personal`.`bcp`.`BCP_DOCUMENT_RAG_DEMO_poc_raw_files_bronze`"
+  parsed_docs_table: "`theodore_kop_personal`.`bcp`.`BCP_DOCUMENT_RAG_DEMO_poc_parsed_docs_silver`"
+  chunked_docs_table: "`theodore_kop_personal`.`bcp`.`BCP_DOCUMENT_RAG_DEMO_poc_chunked_docs_gold`"
+  vectorsearch_index_table: "`theodore_kop_personal`.`bcp`.`BCP_DOCUMENT_RAG_DEMO_poc_chunked_docs_gold_index`"
+
+# Chain configuration
+chain_config:
+  databricks_resources:
+    vector_search_endpoint_name: "bcp_document_store"
+    llm_endpoint_name: "bcp-llama4-maverick"
+  retriever_config:
+    vector_search_index: "theodore_kop_personal.bcp.BCP_DOCUMENT_RAG_DEMO_poc_chunked_docs_gold_index"
+    schema:
+      primary_key: "chunk_id"
+      chunk_text: "chunked_text"
+      document_uri: "path"
+    chunk_template: |
+      Passage: {chunk_text}
+      
+      ---
+    parameters:
+      k: 8
+      query_type: "hybrid"
+    data_pipeline_tag: "bcp_doc_poc"
+  llm_config:
+    llm_system_prompt_template: |
+      You are an insightful and helpful assistant for BCP that only answers questions related to BCP internal documentation. Use the following pieces of retrieved context to answer the question. Some pieces of context may be irrelevant, in which case you should not use them to form the answer. Answer honestly and if you do not now the answer or if the answer is not contained in the documentation provided as context, limit yourself to answer that "You could not find the answer in the documentation and prompt the user to provide more details"
+
+      Context: {context}
+    llm_parameters:
+      temperature: 0
+      max_tokens: 2000
+      extra_body:
+        enable_safety_filter: true 
