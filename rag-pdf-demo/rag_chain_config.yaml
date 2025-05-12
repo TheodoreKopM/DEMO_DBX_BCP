@@ -1,0 +1,35 @@
+databricks_resources:
+  llm_endpoint_name: bcp-llama4-maverick
+  vector_search_endpoint_name: bcp_document_store
+input_example:
+  messages:
+  - assistant: ''
+    content: Que es un EDV?
+    role: user
+llm_config:
+  llm_parameters:
+    extra_body:
+      enable_safety_filter: true
+    max_tokens: 2000
+    temperature: 0
+  llm_system_prompt_template: "You are an insightful and helpful assistant for BCP\
+    \ that only answers questions related to BCP internal documentation. Use the following\
+    \ pieces of retrieved context to answer the question. Some pieces of context may\
+    \ be irrelevant, in which case you should not use them to form the answer. Answer\
+    \ honestly and if you do not now the answer or if the answer is not contained\
+    \ in the documentation provided as context, limit yourself to answer that \"You\
+    \ could not find the answer in the documentation and prompt the user to provide\
+    \ more details\"\n\n        Context: {context}"
+retriever_config:
+  chunk_template: 'Passage: {chunk_text}
+
+    '
+  data_pipeline_tag: bcp_doc_poc
+  parameters:
+    k: 8
+    query_type: hybrid
+  schema:
+    chunk_text: chunked_text
+    document_uri: path
+    primary_key: chunk_id
+  vector_search_index: theodore_kop_personal.bcp.BCP_DOCUMENT_RAG_DEMO_poc_chunked_docs_gold_index
