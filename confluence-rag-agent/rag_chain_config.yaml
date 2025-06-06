@@ -1,6 +1,6 @@
 databricks_resources:
   vector_search_endpoint_name: bcp_confluence_store
-  llm_endpoint_name: bcp-llama-405b
+  llm_endpoint_name: databricks-claude-3-7-sonnet
 retriever_config:
   vector_search_index: theodore_kop_personal.bcp.bcp_chunked_docs_managed_index
   schema:

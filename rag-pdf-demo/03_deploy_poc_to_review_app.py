@@ -4,6 +4,10 @@
 
 # COMMAND ----------
 
+# MAGIC %run ./00_config
+
+# COMMAND ----------
+
 import os
 import mlflow
 import time
@@ -13,10 +17,6 @@ from databricks.sdk.service.serving import EndpointStateReady, EndpointStateConf
 from databricks.sdk.errors import NotFound, ResourceDoesNotExist
 
 w = WorkspaceClient()
-
-# COMMAND ----------
-
-# MAGIC %run ./00_config
 
 # COMMAND ----------
 
@@ -67,12 +67,13 @@ chain_input = {
     "messages": [
         {
             "role": "user",
-            "content": "Qué es EDV?", # Replace with a question relevant to your use case
+            "content": "Qué es un EDV?"  # Replace with a question relevant to your use case
         }
     ]
 }
 chain = mlflow.langchain.load_model(logged_chain_info.model_uri)
-chain.invoke(chain_input)
+response = chain.invoke(chain_input)
+display(response)
 
 # COMMAND ----------
 
@@ -162,3 +163,54 @@ print(f"\n\nReview App: {deployment_info.review_app_url}")
 # active_deployment = next((item for item in active_deployments if item.model_name == UC_MODEL_NAME), None)
 
 # print(f"Review App URL: {active_deployment.review_app_url}")
+
+# COMMAND ----------
+
+from databricks.agents.evals.monitors import create_monitor, get_monitor, update_monitor, delete_monitor
+
+monitor = create_monitor(
+    endpoint_name = deployment_info.endpoint_name,
+    monitoring_config = {
+        "sample": 0.8,  # Sample 80% of requests
+        "metrics": ['guideline_adherence', 'groundedness', 'safety', 'relevance_to_query'],
+        "global_guidelines": {
+            "Spanish": ["The response must be in Spanish"],
+            "clarity": ["The response must be clear, coherent, and concise"],
+        }
+    }
+)
+
+# Get the current monitor configuration 
+monitor = get_monitor(endpoint_name=deployment_info.endpoint_name)
+
+# COMMAND ----------
+
+from mlflow import deployments
+
+client = deployments.get_deploy_client("databricks")
+
+questions = [
+    "Como realizar una solicitud de creación de un EDV?",
+    "Como solicitar acceso a una zona EDV?",
+    "Cuales son los controles normativos de los EDV?",
+    "Que es un EDV?",
+    "Cuales son los controles normativos de los EDV?",
+    "Dame un dato curioso",
+    "Cuales son los lineamientos de los EDV?",
+    "Cuales son los pasos de solicitud de creación de EDV?",
+    "Cuales son los pasos para seguir por el Power User responsable de la zona EDV?",
+    "Cuantos controles normativos tienen los EDV y cuales son?",
+    "Listar los controles normativos de los EDV"
+]
+
+for i, question in enumerate(questions, 1):
+    print(f"\nQuestion {i}: {question}")  
+    response = client.predict(
+        endpoint=deployment_info.endpoint_name,
+        inputs={
+            "messages": [
+                {"role": "user", "content": question}
+            ]
+        }
+    )
+    print(response)

@@ -1,0 +1,5 @@
+raw_files_table_name: '`theodore_kop_personal`.`bcp`.`raw_files`'
+parsed_docs_table_name: '`theodore_kop_personal`.`bcp`.`parsed_docs`'
+chunked_docs_table_name: '`theodore_kop_personal`.`bcp`.`chunked_docs`'
+vectorsearch_index_table_name: '`theodore_kop_personal`.`bcp`.`bcp_chunked_docs_managed_index`'
+vectorsearch_index_name: theodore_kop_personal.bcp.bcp_chunked_docs_managed_index

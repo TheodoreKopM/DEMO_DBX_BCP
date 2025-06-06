@@ -149,7 +149,7 @@ eval_data = [
     }
 ]
 
-#eval_df = pd.DataFrame(eval_data)
+eval_df = pd.DataFrame(eval_data)
 
 # COMMAND ----------
 
@@ -219,3 +219,32 @@ per_question_results_df = eval_results.tables['eval_results']
 
 # You can click on a row in the `trace` column to view the detailed MLflow trace
 display(per_question_results_df)
+
+# COMMAND ----------
+
+from mlflow.deployments import get_deploy_client
+
+client = get_deploy_client("databricks")
+endpoint = "agents_theodore_kop_personal-bcp-BCP_DOCUMENT_RAG_DEMO"  # Replace with your endpoint name
+
+chain_input = {
+    "messages": [
+        {
+            "role": "user",
+            "content": "Qué es un EDV?"  # Replace with a question relevant to your use case
+        }
+    ]
+}
+
+# For non-streaming responses
+response = client.predict(endpoint=endpoint, inputs=chain_input)
+print(response)
+# For streaming responses
+#streaming_response = client.predict_stream(endpoint=endpoint, inputs=input_ex)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC Como realizar una solicitud de creación de un EDV?
+# MAGIC Como solicitar acceso a una zona EDV?
+# MAGIC Me parece que hicieron falta pasos, que debo poner como sustento de acceso y en el detalle que debo poner? Revisa que no falte ningun paso! Son 16
