@@ -39,7 +39,18 @@ llm = ChatDatabricks(
 )
 
 # System prompt for RAG agent
-system_prompt = llm_config.get("llm_system_prompt_template")
+system_prompt = llm_config.get("llm_system_prompt_template") + """
+
+When answering questions, please include a list of the document sources you used to form your answer. 
+Format your response as follows:
+
+Answer: [Your answer here]
+
+Sources:
+- [Document 1 path]
+- [Document 2 path]
+...
+"""
 
 ###############################################################################
 ## Define tools for your agent
