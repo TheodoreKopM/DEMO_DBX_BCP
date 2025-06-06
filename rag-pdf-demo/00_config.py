@@ -15,7 +15,7 @@ import mlflow
 
 # COMMAND ----------
 
-# MAGIC %run "/Workspace/Users/theodore.kop@databricks.com/BCP/Documentation_RAG/GeniaPOC/00_global_config"
+# MAGIC %run "/Workspace/Users/theodore.kop@databricks.com/BCP/Documentation_RAG/GeniaPOC/BCP/00_global_config"
 
 # COMMAND ----------
 
@@ -44,13 +44,9 @@ print(f"POC app using the UC catalog/schema {UC_CATALOG}.{UC_SCHEMA} with source
 data_pipeline_config = {
     # Vector Search index configuration
     "vectorsearch_config": {
-        # Pipeline execution mode.
-        # TRIGGERED: If the pipeline uses the triggered execution mode, the system stops processing after successfully refreshing the source table in the pipeline once, ensuring the table is updated based on the data available when the update started.
-        # CONTINUOUS: If the pipeline uses continuous execution, the pipeline processes new data as it arrives in the source table to keep vector index fresh.
-        "pipeline_type": "CONTINUOS",
+        "pipeline_type": "CONTINUOUS",
     },
     # Embedding model to use
-    # Tested configurations are available in the `supported_configs/embedding_models` Notebook
     "embedding_config": {
         # Model Serving endpoint name
         #"embedding_endpoint_name": "databricks-gte-large-en",
@@ -63,23 +59,15 @@ data_pipeline_config = {
         },
     },
     # Parsing and chunking configuration
-    # Changing this configuration here will NOT impact your data pipeline, these values are hardcoded in the POC data pipeline.
-    # It is provided so you can copy / paste this configuration directly into the `Improve RAG quality` step and replicate the POC's data pipeline configuration
     "pipeline_config": {
         # File format of the source documents
         "file_format": "pdf",
-        # Parser to use (must be present in `parser_library` Notebook)
         "parser": {"name": "pypdf", "config": {}},
-        # Chunker to use (must be present in `chunker_library` Notebook)
         "chunker": {
             "name": "langchain_recursive_char",
             "config": {
-                #"chunk_size_tokens": 768,
                 "chunk_size_tokens": 1024,
-                #"chunk_size_tokens": 512,
-                #"chunk_overlap_tokens": 230,
                 "chunk_overlap_tokens": 512,
-                #"chunk_overlap_tokens": 124,
             },
         },
     },
@@ -163,21 +151,18 @@ CHAIN_CODE_FILE = "multi_turn_rag_chain"
 
 # COMMAND ----------
 
+VECTOR_SEARCH_ENDPOINT = "bcp_document_store"
+VECTOR_SEARCH_INDEX = "theodore_kop_personal.bcp.bcp_documetn_rag_poc_chunked_docs_managed_index"
+
 # Chain configuration
 # We suggest using these default settings
 rag_chain_config = {
     "databricks_resources": {
-        # Only required if using Databricks vector search
         "vector_search_endpoint_name": VECTOR_SEARCH_ENDPOINT,
-        # Databricks Model Serving endpoint name
-        # This is the generator LLM where your LLM queries are sent.
-        #"llm_endpoint_name": "databricks-dbrx-instruct",
-        #"llm_endpoint_name": "databricks-meta-llama-3-3-70b-instruct",
         "llm_endpoint_name": "bcp-llama4-maverick",
     },
     "retriever_config": {
-        # Vector Search index that is created by the data pipeline
-        "vector_search_index": destination_tables_config["vectorsearch_index_name"],
+        "vector_search_index": VECTOR_SEARCH_INDEX,
         "schema": {
             # The column name in the retriever's response referred to the unique key
             # If using Databricks vector search with delta sync, this should the column of the delta table that acts as the primary key
@@ -206,16 +191,13 @@ rag_chain_config = {
         "llm_system_prompt_template": """You are an insightful and helpful assistant for BCP that only answers questions related to BCP internal documentation. Use the following pieces of retrieved context to answer the question. Some pieces of context may be irrelevant, in which case you should not use them to form the answer. Answer honestly and if you do not now the answer or if the answer is not contained in the documentation provided as context, limit yourself to answer that "You could not find the answer in the documentation and prompt the user to provide more details"
 
         Context: {context}""".strip(),
-                # Parameters that control how the LLM responds.
-                "llm_parameters": {"temperature": 0, "max_tokens": 2000 , "extra_body": {"enable_safety_filter": True} },
-                #"llm_parameters": {"temperature": 0.01, "max_tokens": 1000},
+                "llm_parameters": {"temperature": 0, "max_tokens": 2000},
     },
     "input_example": {
         "messages": [
             {
                 "role": "user",
-                "content": "Que es un EDV?",
-                "assistant": ""
+                "content": "Qué es un EDV?",
             },
         ]
     },

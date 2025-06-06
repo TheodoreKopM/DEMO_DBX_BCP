@@ -17,8 +17,11 @@
 
 # COMMAND ----------
 
+# MAGIC %run ./00_config
+
+# COMMAND ----------
+
 # MAGIC %pip install -qqqq -U pypdf==4.1.0 databricks-vectorsearch transformers==4.41.1 torch==2.3.0 tiktoken==0.7.0 langchain-text-splitters==0.2.2 mlflow mlflow-skinny
-# MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
 
@@ -53,10 +56,6 @@ def get_table_url(table_fqdn):
 # MAGIC %md
 # MAGIC
 # MAGIC ## Configuration
-
-# COMMAND ----------
-
-# MAGIC %run ./00_config
 
 # COMMAND ----------
 
@@ -384,6 +383,10 @@ display(chunked_files_df)
 tag_delta_table(destination_tables_config["chunked_docs_table_name"], data_pipeline_config)
 
 mlflow.log_input(mlflow.data.load_delta(table_name=destination_tables_config.get("chunked_docs_table_name")), context="chunked_docs")
+
+# COMMAND ----------
+
+print(data_pipeline_config)
 
 # COMMAND ----------
 
